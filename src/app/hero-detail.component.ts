@@ -1,12 +1,16 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { first } from 'rxjs/operators';
 import { Hero } from './hero';
-import { HeroService } from './hero.service';
+import { GetHeroAction, SaveHeroAction } from './store/actions/hero.actions';
+import { selectHeroes, selectHeroState } from './store/selectors/hero.selectors';
+import { AppState } from './store/state/state';
 
 @Component({
   selector: 'my-hero-detail',
   templateUrl: './hero-detail.component.html',
-  styleUrls: ['./hero-detail.component.css']
+  styleUrls: ['./hero-detail.component.css'],
 })
 export class HeroDetailComponent implements OnInit {
   @Input() hero: Hero;
@@ -15,16 +19,22 @@ export class HeroDetailComponent implements OnInit {
   navigated = false; // true if navigated here
 
   constructor(
-    private heroService: HeroService,
-    private route: ActivatedRoute
-  ) {}
+    private store: Store<AppState>,
+    private route: ActivatedRoute,
+  ) {
+  }
 
   ngOnInit(): void {
     this.route.params.forEach((params: Params) => {
       if (params['id'] !== undefined) {
         const id = +params['id'];
         this.navigated = true;
-        this.heroService.getHero(id).subscribe(hero => (this.hero = hero));
+        this.store.dispatch(new GetHeroAction(id));
+        this.store.pipe(selectHeroes)
+          .subscribe(
+            heroes => {
+              this.hero = heroes.find(hero => hero.id === id);
+            });
       } else {
         this.navigated = false;
         this.hero = new Hero();
@@ -33,10 +43,17 @@ export class HeroDetailComponent implements OnInit {
   }
 
   save(): void {
-    this.heroService.save(this.hero).subscribe(hero => {
-      this.hero = hero; // saved hero, w/ id if new
-      this.goBack(hero);
-    }, error => (this.error = error)); // TODO: Display error message
+    this.store.dispatch(new SaveHeroAction({ ...this.hero }));
+    const heroSaving = this.store.pipe(
+      selectHeroState,
+      first(state => state.heroSavingComplete),
+    ).subscribe(heroState => {
+      if (heroState.heroSavingError) {
+        this.error = heroState.heroSavingError;
+      } else {
+        this.goBack(this.hero);
+      }
+    });
   }
 
   goBack(savedHero: Hero = null): void {

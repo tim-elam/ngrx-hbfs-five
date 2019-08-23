@@ -1,29 +1,32 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Hero } from './hero';
-import { HeroService } from './hero.service';
+import { DeleteHeroAction, GetHeroesAction } from './store/actions/hero.actions';
+import { selectHeroes, selectHeroState } from './store/selectors/hero.selectors';
+import { AppState } from './store/state/state';
+
 
 @Component({
   selector: 'my-heroes',
   templateUrl: './heroes.component.html',
-  styleUrls: ['./heroes.component.css']
+  styleUrls: ['./heroes.component.css'],
 })
 export class HeroesComponent implements OnInit {
-  heroes: Hero[];
+  heroes: Observable<Hero[]>;
   selectedHero: Hero;
   addingHero = false;
   error: any;
   showNgFor = false;
 
-  constructor(private router: Router, private heroService: HeroService) {}
+  constructor(private router: Router, private store: Store<AppState>) {
+    this.heroes = this.store.pipe(selectHeroes);
+  }
 
   getHeroes(): void {
-    this.heroService
-      .getHeroes()
-      .subscribe(
-        heroes => (this.heroes = heroes),
-        error => (this.error = error)
-      )
+    this.store.dispatch(new GetHeroesAction());
   }
 
   addHero(): void {
@@ -40,12 +43,13 @@ export class HeroesComponent implements OnInit {
 
   deleteHero(hero: Hero, event: any): void {
     event.stopPropagation();
-    this.heroService.delete(hero).subscribe(res => {
-      this.heroes = this.heroes.filter(h => h !== hero);
-      if (this.selectedHero === hero) {
-        this.selectedHero = null;
-      }
-    }, error => (this.error = error));
+    this.store.dispatch(new DeleteHeroAction(hero));
+    this.store.pipe(
+      selectHeroState,
+      map(state => state.heroDeletingError),
+    ).subscribe((error) => {
+      this.error = error;
+    });
   }
 
   ngOnInit(): void {

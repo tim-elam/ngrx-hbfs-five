@@ -1,14 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, Subject, of } from 'rxjs';
-import {
-  catchError,
-  debounceTime,
-  distinctUntilChanged,
-  switchMap
-} from 'rxjs/operators';
+import { Store } from '@ngrx/store';
+import { Observable, Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { Hero } from './hero';
-import { HeroService } from './hero.service';
+import { FilterHeroesAction } from './store/actions/hero.actions';
+import { selectHeroState } from './store/selectors/hero.selectors';
+import { AppState } from './store/state/state';
 
 @Component({
   selector: 'my-hero-search',
@@ -20,9 +18,10 @@ export class HeroSearchComponent implements OnInit {
   private searchTerms = new Subject<string>();
 
   constructor(
-    private heroService: HeroService,
-    private router: Router
-  ) {}
+    private store: Store<AppState>,
+    private router: Router,
+  ) {
+  }
 
   search(term: string): void {
     // Push a search term into the observable stream.
@@ -30,23 +29,25 @@ export class HeroSearchComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.heroes = this.searchTerms.pipe(
+    this.searchTerms.pipe(
       debounceTime(300), // wait for 300ms pause in events
       distinctUntilChanged(), // ignore if next search term is same as previous
-      switchMap(
-        term =>
-          term // switch to new observable each time
-            ? // return the http search observable
-              this.heroService.search(term)
-            : // or the observable of empty heroes if no search term
-              of<Hero[]>([])
-      ),
-      catchError(error => {
-        // TODO: real error handling
-        console.log(`Error in component ... ${error}`);
-        return of<Hero[]>([]);
-      })
+    )
+      .subscribe(term => this.store.dispatch(new FilterHeroesAction(term)));
+    this.heroes = this.store.pipe(
+      selectHeroState,
+      map(state => state.filteredHeroes),
     );
+
+    this.store.pipe(
+      selectHeroState,
+      map(state => state.filterError),
+      filter(Boolean),
+    ).subscribe(error => {
+      // TODO: real heroesError handling
+      console.log(`Error in component ... ${error}`);
+
+    });
   }
 
   gotoDetail(hero: Hero): void {
