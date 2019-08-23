@@ -1,5 +1,8 @@
+import { RequestInfo } from 'angular-in-memory-web-api';
+import { Observable } from 'rxjs';
+
 export class InMemoryDataService {
-  createDb() {
+  createDb(reqInfo?: RequestInfo): {} | Observable<{}> | Promise<{}> {
     const heroes = [
       { id: 11, name: 'Mr. Nice' },
       { id: 12, name: 'Narco' },
@@ -12,6 +15,6 @@ export class InMemoryDataService {
       { id: 19, name: 'Magma' },
       { id: 20, name: 'Tornado' }
     ];
-    return { heroes };
+    return { heroes, hero: heroes };
   }
 }

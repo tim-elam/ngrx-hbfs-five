@@ -8,8 +8,16 @@ import { Hero } from './hero';
 @Injectable()
 export class HeroService {
   private heroesUrl = 'app/heroes'; // URL to web api
+  private heroUrl = 'app/hero'; // URL to web api
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+  }
+
+  search(term: string): Observable<Hero[]> {
+    return this.http
+      .get<Hero[]>(`${this.heroesUrl}?name=${term}`)
+      .pipe(catchError(this.handleError));
+  }
 
   getHeroes() {
     return this.http
@@ -18,9 +26,9 @@ export class HeroService {
   }
 
   getHero(id: number): Observable<Hero> {
-    return this.getHeroes().pipe(
-      map(heroes => heroes.find(hero => hero.id === id))
-    );
+    return this.http
+      .get<Hero>(`${this.heroUrl}/${id}`)
+      .pipe(map(data => data), catchError(this.handleError));
   }
 
   save(hero: Hero) {
@@ -34,7 +42,7 @@ export class HeroService {
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
 
-    const url = `${this.heroesUrl}/${hero.id}`;
+    const url = `${this.heroUrl}/${hero.id}`;
 
     return this.http.delete<Hero>(url).pipe(catchError(this.handleError));
   }
@@ -42,7 +50,7 @@ export class HeroService {
   // Add new Hero
   private post(hero: Hero) {
     const headers = new Headers({
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     });
 
     return this.http
@@ -55,7 +63,7 @@ export class HeroService {
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
 
-    const url = `${this.heroesUrl}/${hero.id}`;
+    const url = `${this.heroUrl}/${hero.id}`;
 
     return this.http.put<Hero>(url, hero).pipe(catchError(this.handleError));
   }
