@@ -1,11 +1,11 @@
-import { Hero } from '../../hero';
 import { HeroActions, HeroActionTypes } from '../actions/hero.actions';
-import { HeroState } from '../state/state';
+import { heroAdapter, HeroState } from '../state/state';
 
 export function heroReducer(state: HeroState, action: HeroActions): HeroState {
   if (!state) {
     return {
-      heroes: [],
+      heroes: heroAdapter.getInitialState(),
+      filteredHeroes: heroAdapter.getInitialState(),
     };
   }
   let nextState: HeroState = { ...state };
@@ -16,7 +16,7 @@ export function heroReducer(state: HeroState, action: HeroActions): HeroState {
       break;
 
     case HeroActionTypes.GetHeroSuccess:
-      nextState.heroes = updateHeroes(nextState.heroes, action.hero);
+      nextState.heroes = heroAdapter.updateOne({ id: action.hero.id, changes: action.hero }, nextState.heroes);
       delete nextState.singleHeroId;
       delete nextState.singleHeroError;
       break;
@@ -31,7 +31,7 @@ export function heroReducer(state: HeroState, action: HeroActions): HeroState {
       break;
 
     case HeroActionTypes.GetHeroesSuccess:
-      nextState.heroes = action.heroes;
+      nextState.heroes = heroAdapter.addAll(action.heroes, nextState.heroes);
       delete nextState.heroesError;
       break;
 
@@ -52,7 +52,7 @@ export function heroReducer(state: HeroState, action: HeroActions): HeroState {
       break;
 
     case HeroActionTypes.FilterHeroesSuccess:
-      nextState.filteredHeroes = action.filteredHeroes;
+      nextState.filteredHeroes = heroAdapter.addAll(action.filteredHeroes, nextState.filteredHeroes);
       delete nextState.filterError;
       break;
 
@@ -66,7 +66,7 @@ export function heroReducer(state: HeroState, action: HeroActions): HeroState {
       break;
 
     case HeroActionTypes.SaveHeroSuccess:
-      nextState.heroes = updateHeroes(nextState.heroes, action.hero);
+      nextState.heroes = heroAdapter.updateOne({ id: action.hero.id, changes: action.hero }, nextState.heroes);
       delete nextState.heroSavingError;
       nextState.heroSavingComplete = true;
       break;
@@ -81,7 +81,7 @@ export function heroReducer(state: HeroState, action: HeroActions): HeroState {
       break;
 
     case HeroActionTypes.DeleteHeroSuccess:
-      nextState.heroes = nextState.heroes.filter(hero => hero.id !== action.hero.id);
+      nextState.heroes = heroAdapter.removeOne(action.hero.id, nextState.heroes);
       delete nextState.heroDeletingError;
       nextState.heroDeletingComplete = true;
       break;
@@ -92,17 +92,4 @@ export function heroReducer(state: HeroState, action: HeroActions): HeroState {
       break;
   }
   return nextState;
-}
-
-function updateHeroes(heroes: Hero[], hero): Hero[] {
-  const updateIndex = heroes.findIndex(hero => hero.id === hero.id);
-  if (updateIndex === -1) {
-    return [...heroes, hero];
-  }
-  return heroes.map(hero => {
-    if (hero.id === hero.id) {
-      return hero;
-    }
-    return hero;
-  })
 }

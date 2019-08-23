@@ -1,17 +1,18 @@
+import { createEntityAdapter, EntityState } from '@ngrx/entity';
 import { Hero } from '../../hero';
 
 export interface AppState {
-  heroState: HeroState;
+  heroState: HeroState
 }
 
 export interface HeroState {
   // GET
-  heroes: Hero[];
+  heroes: EntityState<Hero>;
   heroesError?: any;
   singleHeroId?: number;
   singleHeroError?: any;
   nameFilter?: string
-  filteredHeroes?: Hero[];
+  filteredHeroes: EntityState<Hero>;
   filterError?: any;
   // POST & PUT
   heroSavingError?: any;
@@ -20,3 +21,5 @@ export interface HeroState {
   heroDeletingError?: any;
   heroDeletingComplete?: boolean;
 }
+
+export const heroAdapter = createEntityAdapter<Hero>();

@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { first } from 'rxjs/operators';
+import { first, map } from 'rxjs/operators';
 import { Hero } from './hero';
 import { GetHeroAction, SaveHeroAction } from './store/actions/hero.actions';
-import { selectHeroes, selectHeroState } from './store/selectors/hero.selectors';
-import { AppState } from './store/state/state';
+import { heroSelectors, selectHeroState } from './store/selectors/hero.selectors';
+import { AppState, heroAdapter } from './store/state/state';
 
 @Component({
   selector: 'my-hero-detail',
@@ -30,10 +30,12 @@ export class HeroDetailComponent implements OnInit {
         const id = +params['id'];
         this.navigated = true;
         this.store.dispatch(new GetHeroAction(id));
-        this.store.pipe(selectHeroes)
+        this.store.pipe(
+          map(heroSelectors.selectEntities)
+        )
           .subscribe(
             heroes => {
-              this.hero = heroes.find(hero => hero.id === id);
+              this.hero = heroes[id];
             });
       } else {
         this.navigated = false;

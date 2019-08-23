@@ -5,7 +5,7 @@ import { Observable, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { Hero } from './hero';
 import { FilterHeroesAction } from './store/actions/hero.actions';
-import { selectHeroState } from './store/selectors/hero.selectors';
+import { filteredHeroSelectors, selectHeroState } from './store/selectors/hero.selectors';
 import { AppState } from './store/state/state';
 
 @Component({
@@ -35,8 +35,7 @@ export class HeroSearchComponent implements OnInit {
     )
       .subscribe(term => this.store.dispatch(new FilterHeroesAction(term)));
     this.heroes = this.store.pipe(
-      selectHeroState,
-      map(state => state.filteredHeroes),
+      map(filteredHeroSelectors.selectAll)
     );
 
     this.store.pipe(

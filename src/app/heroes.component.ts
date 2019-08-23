@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Hero } from './hero';
 import { DeleteHeroAction, GetHeroesAction } from './store/actions/hero.actions';
-import { selectHeroes, selectHeroState } from './store/selectors/hero.selectors';
+import { heroSelectors, selectHeroState } from './store/selectors/hero.selectors';
 import { AppState } from './store/state/state';
 
 
@@ -22,7 +22,7 @@ export class HeroesComponent implements OnInit {
   showNgFor = false;
 
   constructor(private router: Router, private store: Store<AppState>) {
-    this.heroes = this.store.pipe(selectHeroes);
+    this.heroes = this.store.pipe(map(heroSelectors.selectAll));
   }
 
   getHeroes(): void {
