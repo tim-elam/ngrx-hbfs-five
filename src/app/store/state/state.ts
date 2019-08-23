@@ -10,16 +10,13 @@ export interface HeroState {
   heroesError?: any;
   singleHeroId?: number;
   singleHeroError?: any;
-  heroesLoading?: boolean;
   nameFilter?: string
   filteredHeroes?: Hero[];
   filterError?: any;
   // POST & PUT
-  heroSaving?: Hero;
   heroSavingError?: any;
   heroSavingComplete?: boolean;
   // DELETE
-  heroDeleting?: Hero;
   heroDeletingError?: any;
   heroDeletingComplete?: boolean;
 }

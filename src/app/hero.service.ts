@@ -1,170 +1,68 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Store } from '@ngrx/store';
 import { Observable, throwError as observableThrowError } from 'rxjs';
-import { catchError, concatMap, distinctUntilChanged, filter, map, pairwise, tap } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 
 import { Hero } from './hero';
-import {
-  DeleteHeroErrorAction,
-  DeleteHeroSuccessAction,
-  FilterHeroesErrorAction,
-  FilterHeroesSuccessAction,
-  GetHeroErrorAction,
-  GetHeroesErrorAction,
-  GetHeroesSuccessAction,
-  GetHeroSuccessAction,
-  SaveHeroErrorAction,
-  SaveHeroSuccessAction,
-} from './store/actions/hero.actions';
-import { selectHeroState } from './store/selectors/hero.selectors';
-import { AppState } from './store/state/state';
 
 @Injectable()
 export class HeroService {
   private heroesUrl = 'api/heroes'; // URL to web api
   private heroUrl = 'api/hero'; // URL to web api
 
-  constructor(private http: HttpClient, private store: Store<AppState>) {
-    const heroStateChanges =
-      store
-        .pipe(
-          selectHeroState,
-          distinctUntilChanged(),
-          pairwise(),
-        );
-
-    heroStateChanges
-      .pipe(
-        filter(([previousState, nextState]) => !previousState.heroesLoading && nextState.heroesLoading),
-        concatMap(() => this.getHeroes()),
-      )
-      .subscribe();
-
-    heroStateChanges
-      .pipe(
-        map(([previousState, nextState]) => !previousState.heroSaving && nextState.heroSaving),
-        filter<Hero>(Boolean),
-        concatMap(heroToSave => {
-          if (heroToSave.id) {
-            return this.put(heroToSave);
-          } else {
-            return this.post(heroToSave);
-          }
-        }),
-      )
-      .subscribe();
-
-    heroStateChanges
-      .pipe(
-        map(([previousState, nextState]) => !previousState.singleHeroId && nextState.singleHeroId),
-        filter<number>(Boolean),
-        concatMap(id => this.getHero(id)),
-      )
-      .subscribe();
-
-    heroStateChanges
-      .pipe(
-        map(([previousState, nextState]) => !previousState.heroDeleting && nextState.heroDeleting),
-        filter<Hero>(Boolean),
-        concatMap(hero => this.delete(hero)),
-      )
-      .subscribe();
-
-    heroStateChanges
-      .pipe(
-        map(([previousState, nextState]) => nextState.nameFilter !== previousState.nameFilter && nextState.nameFilter),
-        filter(Boolean),
-        concatMap(term => this.search(term)),
-      )
-      .subscribe();
+  constructor(private http: HttpClient) {
   }
 
-  private search(term: string): Observable<Hero[]> {
+  public search(term: string): Observable<Hero[]> {
     return this.http
       .get<Hero[]>(`${this.heroesUrl}?name=${term}`)
       .pipe(
-        tap(filteredHeroes => {
-          this.store.dispatch(new FilterHeroesSuccessAction(filteredHeroes));
-        }),
-        catchError((error) => {
-          this.store.dispatch(new FilterHeroesErrorAction(error));
-          return this.handleError(error);
-        }),
+        catchError(this.handleError),
       );
   }
 
-  private getHeroes(): Observable<Hero[]> {
+  public getHeroes(): Observable<Hero[]> {
     return this.http
       .get<Hero[]>(this.heroesUrl)
       .pipe(
-        tap(heroes => this.store.dispatch(new GetHeroesSuccessAction(heroes))),
-        catchError((error) => {
-          this.store.dispatch(new GetHeroesErrorAction(error));
-          return this.handleError(error);
-        }));
-  }
-
-  private getHero(id: number): Observable<Hero> {
-    return this.http
-      .get<Hero>(`${this.heroUrl}/${id}`)
-      .pipe(
-        tap(hero => this.store.dispatch(new GetHeroSuccessAction(hero))),
-        catchError((error) => {
-          this.store.dispatch(new GetHeroErrorAction(error, id));
-          return this.handleError(error);
-        }),
+        catchError(this.handleError),
       );
   }
 
-  private delete(hero: Hero): Observable<Hero> {
+  public getHero(id: number): Observable<Hero> {
+    return this.http
+      .get<Hero>(`${this.heroUrl}/${id}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  public delete(hero: Hero): Observable<void> {
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
 
     const url = `${this.heroUrl}/${hero.id}`;
 
-    return this.http.delete<Hero>(url).pipe(
-      tap(() => this.store.dispatch(new DeleteHeroSuccessAction(hero))),
-      catchError((error) => {
-        this.store.dispatch(new DeleteHeroErrorAction(error, hero));
-        return this.handleError(error);
-      }),
-    );
+    return this.http.delete<void>(url)
+      .pipe(catchError(this.handleError));
   }
 
   // Add new Hero
-  private post(hero: Hero) {
+  public post(hero: Hero): Observable<void> {
     const headers = new Headers({
       'Content-Type': 'application/json',
     });
 
-    return this.http
-      .post<Hero>(this.heroesUrl, hero)
-      .pipe(
-        tap(hero => this.store.dispatch(new SaveHeroSuccessAction(hero))),
-        catchError(error => {
-          this.store.dispatch(new SaveHeroErrorAction(error, hero));
-          return this.handleError(error);
-        }),
-      );
+    return this.http.post<void>(this.heroesUrl, hero)
+      .pipe(catchError(this.handleError));
   }
 
   // Update existing Hero
-  private put(hero: Hero) {
+  public put(hero: Hero): Observable<void> {
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
 
     const url = `${this.heroUrl}/${hero.id}`;
-    return this.http.put<Hero>(url, hero)
-      .pipe(
-        tap(() => {
-          return this.store.dispatch(new SaveHeroSuccessAction(hero));
-        }),
-        catchError(error => {
-          this.store.dispatch(new SaveHeroErrorAction(error, hero));
-          return this.handleError(error);
-        }),
-      );
+    return this.http.put<void>(url, hero)
+      .pipe(catchError(this.handleError));
   }
 
   private handleError(res: HttpErrorResponse | any) {

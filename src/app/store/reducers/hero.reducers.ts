@@ -27,13 +27,11 @@ export function heroReducer(state: HeroState, action: HeroActions): HeroState {
       break;
 
     case HeroActionTypes.GetHeroes:
-      nextState.heroesLoading = true;
       delete nextState.heroesError;
       break;
 
     case HeroActionTypes.GetHeroesSuccess:
       nextState.heroes = action.heroes;
-      nextState.heroesLoading = false;
       delete nextState.heroesError;
       break;
 
@@ -64,37 +62,31 @@ export function heroReducer(state: HeroState, action: HeroActions): HeroState {
       break;
 
     case HeroActionTypes.SaveHero:
-      nextState.heroSaving = action.hero;
       nextState.heroSavingComplete = false;
       break;
 
     case HeroActionTypes.SaveHeroSuccess:
       nextState.heroes = updateHeroes(nextState.heroes, action.hero);
-      delete nextState.heroSaving;
       delete nextState.heroSavingError;
       nextState.heroSavingComplete = true;
       break;
 
     case HeroActionTypes.SaveHeroError:
-      delete nextState.heroSaving;
       nextState.heroSavingError;
       nextState.heroSavingComplete = false;
       break;
 
     case HeroActionTypes.DeleteHero:
-      nextState.heroDeleting = action.hero;
       nextState.heroDeletingComplete = false;
       break;
 
     case HeroActionTypes.DeleteHeroSuccess:
       nextState.heroes = nextState.heroes.filter(hero => hero.id !== action.hero.id);
-      delete nextState.heroDeleting;
       delete nextState.heroDeletingError;
       nextState.heroDeletingComplete = true;
       break;
 
     case HeroActionTypes.DeleteHeroError:
-      delete nextState.heroDeleting;
       nextState.heroDeletingError;
       nextState.heroDeletingComplete = false;
       break;

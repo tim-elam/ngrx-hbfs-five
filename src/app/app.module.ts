@@ -2,6 +2,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
+import { EffectsModule } from '@ngrx/effects';
 import { StoreModule } from '@ngrx/store';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 
@@ -16,6 +17,7 @@ import { HeroSearchComponent } from './hero-search.component';
 import { HeroService } from './hero.service';
 import { HeroesComponent } from './heroes.component';
 import { InMemoryDataService } from './in-memory-data.service';
+import { HeroEffects } from './store/effects/hero.effects';
 import { heroReducer } from './store/reducers/hero.reducers';
 
 @NgModule({
@@ -31,6 +33,7 @@ import { heroReducer } from './store/reducers/hero.reducers';
       passThruUnknownUrl: true,
     }),
     StoreModule.forRoot({ heroState: heroReducer }),
+    EffectsModule.forRoot([HeroEffects]),
     environment.production ? [] : StoreDevtoolsModule.instrument(),
   ],
   declarations: [
@@ -40,7 +43,10 @@ import { heroReducer } from './store/reducers/hero.reducers';
     HeroesComponent,
     HeroDetailComponent,
   ],
-  providers: [HeroService],
+  providers: [
+    HeroService,
+    HeroEffects,
+  ],
   bootstrap: [AppComponent],
 })
 export class AppModule {
