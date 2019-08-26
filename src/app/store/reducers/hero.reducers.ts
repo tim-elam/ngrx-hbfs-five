@@ -31,7 +31,7 @@ export function heroReducer(state: HeroState, action: HeroActions): HeroState {
       break;
 
     case HeroActionTypes.GetHeroesSuccess:
-      nextState.heroes = action.heroes;
+      nextState.heroes = action.heroes.sort(heroSort);
       delete nextState.heroesError;
       break;
 
@@ -52,7 +52,7 @@ export function heroReducer(state: HeroState, action: HeroActions): HeroState {
       break;
 
     case HeroActionTypes.FilterHeroesSuccess:
-      nextState.filteredHeroes = action.filteredHeroes;
+      nextState.filteredHeroes = action.filteredHeroes.sort(heroSearchSort);
       delete nextState.filterError;
       break;
 
@@ -104,5 +104,13 @@ function updateHeroes(heroes: Hero[], hero): Hero[] {
       return hero;
     }
     return hero;
-  })
+  });
+}
+
+function heroSort(a: Hero, b: Hero): number {
+  return b.created_date.localeCompare(a.created_date);
+}
+
+function heroSearchSort(a: Hero, b: Hero): number {
+  return a.name.localeCompare(b.name);
 }
