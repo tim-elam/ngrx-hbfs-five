@@ -16,13 +16,19 @@ export class HeroService {
   search(term: string): Observable<Hero[]> {
     return this.http
       .get<Hero[]>(`${this.heroesUrl}?name=${term}`)
-      .pipe(catchError(this.handleError));
+      .pipe(
+        map(data => data.sort(HeroService.heroSearchSort)),
+        catchError(this.handleError),
+      );
   }
 
   getHeroes() {
     return this.http
       .get<Hero[]>(this.heroesUrl)
-      .pipe(map(data => data), catchError(this.handleError));
+      .pipe(
+        map(data => data.sort(HeroService.heroSort)),
+        catchError(this.handleError),
+      );
   }
 
   getHero(id: number): Observable<Hero> {
@@ -71,5 +77,13 @@ export class HeroService {
   private handleError(res: HttpErrorResponse | any) {
     console.error(res.error || res.body.error);
     return observableThrowError(res.error || 'Server error');
+  }
+
+  private static heroSort(a: Hero, b: Hero): number {
+    return b.created_date.localeCompare(a.created_date);
+  }
+
+  private static heroSearchSort(a: Hero, b: Hero): number {
+    return a.name.localeCompare(b.name);
   }
 }
