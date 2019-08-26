@@ -1,11 +1,11 @@
 import { HeroActions, HeroActionTypes } from '../actions/hero.actions';
-import { heroAdapter, HeroState } from '../state/state';
+import { heroAdapter, heroSearchAdapter, HeroState } from '../state/state';
 
 export function heroReducer(state: HeroState, action: HeroActions): HeroState {
   if (!state) {
     return {
       heroes: heroAdapter.getInitialState(),
-      filteredHeroes: heroAdapter.getInitialState(),
+      filteredHeroes: heroSearchAdapter.getInitialState(),
     };
   }
   let nextState: HeroState = { ...state };
@@ -52,7 +52,7 @@ export function heroReducer(state: HeroState, action: HeroActions): HeroState {
       break;
 
     case HeroActionTypes.FilterHeroesSuccess:
-      nextState.filteredHeroes = heroAdapter.addAll(action.filteredHeroes, nextState.filteredHeroes);
+      nextState.filteredHeroes = heroSearchAdapter.addAll(action.filteredHeroes, nextState.filteredHeroes);
       delete nextState.filterError;
       break;
 
