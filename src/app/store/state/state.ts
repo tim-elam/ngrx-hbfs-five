@@ -11,4 +11,8 @@ export interface HeroState {
   filterError?: any;
 }
 
-export const heroAdapter = createEntityAdapter<Hero>();
+export const heroSearchAdapter = createEntityAdapter<Hero>({ sortComparer: heroSearchSort });
+
+function heroSearchSort(a: Hero, b: Hero): number {
+  return a.name.localeCompare(b.name);
+}
