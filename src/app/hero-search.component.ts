@@ -35,7 +35,7 @@ export class HeroSearchComponent implements OnInit {
     )
       .subscribe(term => this.store.dispatch(new FilterHeroesAction(term)));
     this.heroes = this.store.pipe(
-      map(filteredHeroSelectors.selectAll)
+      map(filteredHeroSelectors.selectAll),
     );
 
     this.store.pipe(

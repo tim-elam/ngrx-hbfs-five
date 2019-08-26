@@ -1,12 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { Store } from '@ngrx/store';
+import { EntityOp, EntityService, EntityServiceFactory } from 'ngrx-data';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { Hero } from './hero';
-import { DeleteHeroAction, GetHeroesAction } from './store/actions/hero.actions';
-import { heroSelectors, selectHeroState } from './store/selectors/hero.selectors';
-import { AppState } from './store/state/state';
+import { ApiEntities } from './store/data/config';
 
 
 @Component({
@@ -21,12 +18,17 @@ export class HeroesComponent implements OnInit {
   error: any;
   showNgFor = false;
 
-  constructor(private router: Router, private store: Store<AppState>) {
-    this.heroes = this.store.pipe(map(heroSelectors.selectAll));
+  private readonly heroService: EntityService<Hero>;
+
+  constructor(
+    private router: Router,
+    factory: EntityServiceFactory,
+  ) {
+    this.heroService = factory.create<Hero>(ApiEntities.Hero);
   }
 
   getHeroes(): void {
-    this.store.dispatch(new GetHeroesAction());
+    this.heroService.getAll();
   }
 
   addHero(): void {
@@ -43,17 +45,17 @@ export class HeroesComponent implements OnInit {
 
   deleteHero(hero: Hero, event: any): void {
     event.stopPropagation();
-    this.store.dispatch(new DeleteHeroAction(hero));
-    this.store.pipe(
-      selectHeroState,
-      map(state => state.heroDeletingError),
-    ).subscribe((error) => {
-      this.error = error;
-    });
+    this.heroService.delete(hero.id);
+    this.heroService.errors$
+      .ofOp(EntityOp.SAVE_DELETE_ONE_ERROR)
+      .subscribe(error => {
+        this.error = error;
+      });
   }
 
   ngOnInit(): void {
     this.getHeroes();
+    this.heroes = this.heroService.entities$;
   }
 
   onSelect(hero: Hero): void {

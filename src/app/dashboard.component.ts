@@ -1,12 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { Store } from '@ngrx/store';
-import { map } from 'rxjs/operators';
+import { EntityService, EntityServiceFactory } from 'ngrx-data';
 
 import { Hero } from './hero';
-import { GetHeroesAction } from './store/actions/hero.actions';
-import { heroSelectors } from './store/selectors/hero.selectors';
-import { AppState } from './store/state/state';
+import { ApiEntities } from './store/data/config';
 
 @Component({
   selector: 'my-dashboard',
@@ -16,16 +13,18 @@ import { AppState } from './store/state/state';
 export class DashboardComponent implements OnInit {
   heroes: Hero[] = [];
 
+  private readonly heroService: EntityService<Hero>;
+
   constructor(
     private router: Router,
-    private store: Store<AppState>) {
+    factory: EntityServiceFactory,
+  ) {
+    this.heroService = factory.create<Hero>(ApiEntities.Hero);
   }
 
   ngOnInit(): void {
-    this.store.dispatch(new GetHeroesAction());
-    this.store.pipe(
-      map(heroSelectors.selectAll),
-    )
+    this.heroService.getAll();
+    this.heroService.entities$
       .subscribe(heroes => {
         this.heroes = heroes.slice(1, 5);
       });

@@ -1,11 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { Store } from '@ngrx/store';
-import { first, map } from 'rxjs/operators';
+import { EntityOp, EntityService, EntityServiceFactory } from 'ngrx-data';
+import { take } from 'rxjs/operators';
 import { Hero } from './hero';
-import { GetHeroAction, SaveHeroAction } from './store/actions/hero.actions';
-import { heroSelectors, selectHeroState } from './store/selectors/hero.selectors';
-import { AppState, heroAdapter } from './store/state/state';
+import { ApiEntities } from './store/data/config';
 
 @Component({
   selector: 'my-hero-detail',
@@ -18,10 +16,13 @@ export class HeroDetailComponent implements OnInit {
   error: any;
   navigated = false; // true if navigated here
 
+  private readonly heroService: EntityService<Hero>;
+
   constructor(
-    private store: Store<AppState>,
     private route: ActivatedRoute,
+    factory: EntityServiceFactory,
   ) {
+    this.heroService = factory.create<Hero>(ApiEntities.Hero);
   }
 
   ngOnInit(): void {
@@ -29,10 +30,8 @@ export class HeroDetailComponent implements OnInit {
       if (params['id'] !== undefined) {
         const id = +params['id'];
         this.navigated = true;
-        this.store.dispatch(new GetHeroAction(id));
-        this.store.pipe(
-          map(heroSelectors.selectEntities)
-        )
+        this.heroService.getByKey(id);
+        this.heroService.entityMap$
           .subscribe(
             heroes => {
               this.hero = heroes[id];
@@ -45,17 +44,21 @@ export class HeroDetailComponent implements OnInit {
   }
 
   save(): void {
-    this.store.dispatch(new SaveHeroAction({ ...this.hero }));
-    const heroSaving = this.store.pipe(
-      selectHeroState,
-      first(state => state.heroSavingComplete),
-    ).subscribe(heroState => {
-      if (heroState.heroSavingError) {
-        this.error = heroState.heroSavingError;
-      } else {
+    this.heroService.update(this.hero);
+    this.heroService.store
+      .pipe(take(1))
+      .subscribe(() => {
         this.goBack(this.hero);
-      }
-    });
+      });
+    this.heroService.errors$
+      .ofOp(
+        EntityOp.SAVE_ADD_ONE_ERROR,
+        EntityOp.SAVE_UPDATE_ONE_ERROR,
+      )
+      .pipe(take(1))
+      .subscribe(error => {
+        this.error = error;
+      });
   }
 
   goBack(savedHero: Hero = null): void {

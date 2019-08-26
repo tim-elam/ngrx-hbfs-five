@@ -7,6 +7,7 @@ import { StoreModule } from '@ngrx/store';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 
 import { HttpClientInMemoryWebApiModule } from 'angular-in-memory-web-api';
+import { NgrxDataModule } from 'ngrx-data';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 
@@ -14,9 +15,10 @@ import { AppComponent } from './app.component';
 import { DashboardComponent } from './dashboard.component';
 import { HeroDetailComponent } from './hero-detail.component';
 import { HeroSearchComponent } from './hero-search.component';
-import { HeroService } from './hero.service';
+import { HeroSearchService } from './hero-search.service';
 import { HeroesComponent } from './heroes.component';
 import { InMemoryDataService } from './in-memory-data.service';
+import { dataConfig } from './store/data/config';
 import { HeroEffects } from './store/effects/hero.effects';
 import { heroReducer } from './store/reducers/hero.reducers';
 
@@ -34,6 +36,7 @@ import { heroReducer } from './store/reducers/hero.reducers';
     }),
     StoreModule.forRoot({ heroState: heroReducer }),
     EffectsModule.forRoot([HeroEffects]),
+    NgrxDataModule.forRoot(dataConfig),
     environment.production ? [] : StoreDevtoolsModule.instrument(),
   ],
   declarations: [
@@ -44,12 +47,10 @@ import { heroReducer } from './store/reducers/hero.reducers';
     HeroDetailComponent,
   ],
   providers: [
-    HeroService,
+    HeroSearchService,
     HeroEffects,
   ],
   bootstrap: [AppComponent],
 })
 export class AppModule {
-  constructor(heroService: HeroService) {
-  }
 }
